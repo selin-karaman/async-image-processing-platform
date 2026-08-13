@@ -1,0 +1,68 @@
+{
+    "env": {
+        "es2021": true,
+        "node": true
+    },
+    "extends": [
+        "airbnb-base",
+        "airbnb-typescript/base",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:eslint-comments/recommended",
+        "plugin:jest/recommended",
+        "plugin:promise/recommended",
+        "prettier"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "project": "./tsconfig.eslint.json",
+        "sourceType": "module"
+    },
+    "plugins": [
+        "@typescript-eslint",
+        "eslint-comments",
+        "jest",
+        "promise",
+        "import",
+        "prettier"
+    ],
+    "rules": {
+        "allowForLoopAfterthoughts": true,
+        "prettier/prettier": "error",
+        "import/prefer-default-export": "off",
+        "import/no-default-export": "error",
+        "no-param-reassign": ["error", { "props": false }],
+        "class-methods-use-this" : "off",
+        "arrow-body-style": ["error", "always"],
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-namespace": "off",
+        "jest/expect-expect": [
+            "error",
+            {
+              "assertFunctionNames": [
+                "expect",
+                "request.**.expect"
+              ],
+              "additionalTestBlockFunctions": []
+            }
+          ],
+        "@typescript-eslint/no-use-before-define": [
+            "error",
+            {
+                "functions": false,
+                "classes": false,
+                "variables": true,
+                "typedefs": true
+            }
+        ],
+        "import/no-extraneous-dependencies": "off"
+    },
+    "settings": {
+        "import/resolver": {
+            "typescript": {
+                "alwaysTryTypes": true,
+                "project": "./tsconfig.json"
+            }
+        }
+    }
+}
