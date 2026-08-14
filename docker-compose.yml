@@ -112,6 +112,88 @@ services:
       minio4:
         condition: service_healthy
 
+  minio-init: #minio cluster başlatıldıktan sonra bucket oluşturmak için kullanılan servis
+    image: minio/mc:RELEASE.2025-05-21T01-59-54Z
+    container_name: async-image-minio-init
+
+    depends_on:
+      minio1:
+        condition: service_healthy
+      minio2:
+        condition: service_healthy
+      minio3:
+        condition: service_healthy
+      minio4:
+        condition: service_healthy
+      minio-nginx:
+        condition: service_started
+
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://minio-nginx:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
+      mc mb --ignore-existing minio/images; 
+      exit 0;
+      "
+
+  backend:
+    build:
+      context: ./backend
+    container_name: async-image-backend
+
+    environment:
+      PORT: 4000
+      MONGO_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/metadata?authSource=admin
+      RABBITMQ_URI: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      ENDPOINT: http://minio-nginx:9000
+      BUCKET: images
+      ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+
+    expose:
+      - "4000"
+
+    depends_on:
+      mongodb:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      minio-nginx:
+        condition: service_started
+
+
+  worker:
+    build:
+      context: ./worker
+    container_name: async-image-worker
+
+    environment:
+      MONGO_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/metadata?authSource=admin
+      RABBITMQ_URI: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+      ENDPOINT: http://minio-nginx:9000
+      BUCKET: images
+      ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+
+    depends_on:
+      mongodb:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      minio-nginx:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: async-image-frontend
+
+    expose:
+      - "80"
+
 
 # ==============================
 # Persistent Volumes
