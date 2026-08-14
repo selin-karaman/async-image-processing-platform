@@ -1,0 +1,134 @@
+x-minio-common: &minio-common
+  image: minio/minio:RELEASE.2025-06-13T11-33-47Z
+  command: server --console-address ":9001" http://minio{1...4}/data{1...2}
+
+  expose:
+    - "9000"
+    - "9001"
+
+  environment:
+    MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+    MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+
+  healthcheck:
+    test: ["CMD", "mc", "ready", "local"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+
+services:
+
+  # ==============================
+  # MongoDB
+  # ==============================
+  mongodb:
+    image: mongo:7
+    container_name: async-image-mongodb
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+
+    volumes:
+      - mongodb_data:/data/db
+
+
+  # ==============================
+  # RabbitMQ
+  # ==============================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: async-image-rabbitmq
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+
+  # ==============================
+  # Distributed MinIO Cluster
+  # ==============================
+  minio1:
+    <<: *minio-common
+    container_name: async-image-minio1
+    hostname: minio1
+
+    volumes:
+      - minio1_data1:/data1
+      - minio1_data2:/data2
+
+
+  minio2:
+    <<: *minio-common
+    container_name: async-image-minio2
+    hostname: minio2
+
+    volumes:
+      - minio2_data1:/data1
+      - minio2_data2:/data2
+
+
+  minio3:
+    <<: *minio-common
+    container_name: async-image-minio3
+    hostname: minio3
+
+    volumes:
+      - minio3_data1:/data1
+      - minio3_data2:/data2
+
+
+  minio4:
+    <<: *minio-common
+    container_name: async-image-minio4
+    hostname: minio4
+
+    volumes:
+      - minio4_data1:/data1
+      - minio4_data2:/data2
+
+  minio-nginx:
+    image: nginx:alpine
+    container_name: async-image-minio-nginx
+
+    volumes:
+      - ./nginx/minio.conf:/etc/nginx/nginx.conf:ro
+
+    expose:
+      - "9000"
+      - "9001"
+
+    depends_on:
+      minio1:
+        condition: service_healthy
+      minio2:
+        condition: service_healthy
+      minio3:
+        condition: service_healthy
+      minio4:
+        condition: service_healthy
+
+
+# ==============================
+# Persistent Volumes
+# ==============================
+volumes:
+
+  mongodb_data:
+  rabbitmq_data:
+
+  minio1_data1:
+  minio1_data2:
+
+  minio2_data1:
+  minio2_data2:
+
+  minio3_data1:
+  minio3_data2:
+
+  minio4_data1:
+  minio4_data2:
