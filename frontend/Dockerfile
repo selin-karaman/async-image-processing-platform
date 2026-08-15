@@ -20,6 +20,11 @@ COPY . .
 
 RUN npm run build
 
+# frontendde hardcode edilmiş linki nginx'le erişmek için değiştiriyoruz. 
+# http://localhost:4000/api/upload -> /api/upload
+RUN find /app/dist/frontend-starter -type f -name "*.js" \
+    -exec sed -i 's|http://localhost:4000/api/upload|/api/upload|g' {} +
+
 # ==============================
 # Stage 2: Production
 # ==============================
