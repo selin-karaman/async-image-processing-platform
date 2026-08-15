@@ -136,6 +136,7 @@ services:
       /bin/sh -c "
       mc alias set minio http://minio-nginx:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD;
       mc mb --ignore-existing minio/images; 
+      mc anonymous set download minio/images;
       exit 0;
       "
 
